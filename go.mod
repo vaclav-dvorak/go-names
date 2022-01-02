@@ -5,6 +5,7 @@ go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0
+	github.com/agnivade/levenshtein v1.1.1
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.2
 	github.com/charmbracelet/lipgloss v0.3.0
