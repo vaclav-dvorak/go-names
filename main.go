@@ -96,11 +96,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Status):
 			m.view = 's'
+			m.status = getStatus()
 		case key.Matches(msg, m.keys.Update):
 			m.view = 'u'
 			runUpdate()
 			m.names = loadNames()
-			m.status = getStatus()
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.Quit):
@@ -117,7 +117,6 @@ func (m model) View() string {
 	}
 
 	var status string
-	status = "hi!"
 	if m.view == 's' {
 		status = ""
 		for k, v := range m.status {
@@ -138,8 +137,17 @@ func (m model) View() string {
 func main() {
 	// search("Trnucha", loadNames())
 	search("", []string{})
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
-		fmt.Printf("Could not start program :(\n%v\n", err)
-		os.Exit(1)
-	}
+
+	done := make(chan struct{})
+
+	p := tea.NewProgram(newModel())
+	go func() {
+		if err := p.Start(); err != nil {
+			fmt.Printf("Could not start program :(\n%v\n", err)
+			os.Exit(1)
+		}
+		close(done)
+	}()
+
+	<-done
 }
