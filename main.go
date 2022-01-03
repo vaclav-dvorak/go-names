@@ -15,6 +15,8 @@ type dataset struct {
 	Names []string `yaml:"names"`
 }
 
+type updateMsg struct{}
+
 const file = "data/names.yml"
 
 // keyMap defines a set of keybindings. To work for help it must satisfy
@@ -67,6 +69,7 @@ type model struct {
 	status     map[string]string
 	names      []string
 	view       rune
+	updating   bool
 	quitting   bool
 }
 
@@ -99,15 +102,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = getStatus()
 		case key.Matches(msg, m.keys.Update):
 			m.view = 'u'
-			runUpdate()
-			m.names = loadNames()
+			m.updating = true
+			return m, updateNames
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
 		case key.Matches(msg, m.keys.Quit):
 			m.quitting = true
 			return m, tea.Quit
 		}
+
+	case updateMsg:
+		m.names = loadNames()
+		m.updating = false
+		return m, nil
 	}
+
 	return m, nil
 }
 
@@ -126,6 +135,9 @@ func (m model) View() string {
 	}
 	if m.view == 'u' {
 		status = "Runing update..."
+		if !m.updating {
+			status += "\nUpdate done..."
+		}
 	}
 
 	helpView := m.help.View(m.keys)
@@ -150,4 +162,9 @@ func main() {
 	}()
 
 	<-done
+}
+
+func updateNames() tea.Msg {
+	runUpdate()
+	return updateMsg(struct{}{})
 }
