@@ -78,6 +78,37 @@ func scrapeCentrum(c chan string) {
 	})
 }
 
+func scrapeEmimino(c chan string) {
+	req, err := http.NewRequest(http.MethodGet, "https://www.emimino.cz/seznam-jmen/neobvykla-jmena-pro-holku/", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Set("User-Agent", "ScraperBot - We read list od names")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer func() {
+		if terr := res.Body.Close(); terr != nil {
+			log.Fatal(terr)
+		}
+	}()
+
+	// b, _ := ioutil.ReadAll(res.Body)
+	// log.Printf("%s\n", b)
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc.Find(".tabbed__body article li").Each(func(i int, s *goquery.Selection) {
+		name := strings.TrimSpace(s.Find("a").Text())
+		c <- name
+	})
+}
+
 func scraper(web int) <-chan string {
 	c := make(chan string) // ubuffered channel
 
@@ -88,6 +119,8 @@ func scraper(web int) <-chan string {
 			scrapeRodina(c)
 		case 1:
 			scrapeCentrum(c)
+		case 2:
+			scrapeEmimino(c)
 		}
 		// close the channel when done; otherwise it leaks resources
 		close(c)
@@ -131,8 +164,9 @@ func fanIn(chans ...<-chan string) chan string {
 func runUpdate() {
 	c1 := scraper(0)
 	c2 := scraper(1)
+	c3 := scraper(2)
 
-	merged := fanIn(c1, c2)
+	merged := fanIn(c1, c2, c3)
 	names := make([]string, 0)
 	for n := range merged { // range loop terminates once the chan is closed, otherwise it blocks if there is no value
 		names = append(names, n)

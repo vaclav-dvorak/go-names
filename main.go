@@ -136,6 +136,7 @@ func (m model) View() string {
 }
 
 func main() {
+	// search("Trnucha", loadNames())
 	search("", []string{})
 	if err := tea.NewProgram(newModel()).Start(); err != nil {
 		fmt.Printf("Could not start program :(\n%v\n", err)
