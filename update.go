@@ -14,8 +14,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func scrapeRodina(c chan string) {
-	req, err := http.NewRequest(http.MethodGet, "https://www.rodina.cz/scripts/jmena/default.asp?muz=0", nil)
+func scrapeURL(url, conv string) *goquery.Document {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -32,7 +32,15 @@ func scrapeRodina(c chan string) {
 		}
 	}()
 
-	utfBody, err := iconv.NewReader(res.Body, "windows-1250", "utf-8")
+	if conv == "utf-8" {
+		doc, terr := goquery.NewDocumentFromReader(res.Body)
+		if terr != nil {
+			log.Fatal(terr)
+		}
+		return doc
+	}
+
+	utfBody, err := iconv.NewReader(res.Body, conv, "utf-8")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -42,34 +50,18 @@ func scrapeRodina(c chan string) {
 		log.Fatal(err)
 	}
 
+	return doc
+}
+
+func scrapeRodina(c chan string) {
+	doc := scrapeURL("https://www.rodina.cz/scripts/jmena/default.asp?muz=0", "windows-1250")
 	doc.Find(".jmena_vse h2").Each(func(i int, s *goquery.Selection) {
 		c <- s.Find("a").Text()
 	})
 }
 
 func scrapeCentrum(c chan string) {
-	req, err := http.NewRequest(http.MethodGet, "http://svatky.centrum.cz/jmenny-seznam/?gender=1", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header.Set("User-Agent", "ScraperBot - We read list od names")
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if terr := res.Body.Close(); terr != nil {
-			log.Fatal(terr)
-		}
-	}()
-
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	doc := scrapeURL("http://svatky.centrum.cz/jmenny-seznam/?gender=1", "utf-8")
 	doc.Find("#list-names .name").Each(func(i int, s *goquery.Selection) {
 		name := s.Find("a").Text()
 		if !strings.Contains(name, " ") {
@@ -79,30 +71,7 @@ func scrapeCentrum(c chan string) {
 }
 
 func scrapeEmimino(c chan string) {
-	req, err := http.NewRequest(http.MethodGet, "https://www.emimino.cz/seznam-jmen/neobvykla-jmena-pro-holku/", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	req.Header.Set("User-Agent", "ScraperBot - We read list od names")
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if terr := res.Body.Close(); terr != nil {
-			log.Fatal(terr)
-		}
-	}()
-
-	// b, _ := ioutil.ReadAll(res.Body)
-	// log.Printf("%s\n", b)
-	doc, err := goquery.NewDocumentFromReader(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	doc := scrapeURL("https://www.emimino.cz/seznam-jmen/neobvykla-jmena-pro-holku/", "utf-8")
 	doc.Find(".tabbed__body article li").Each(func(i int, s *goquery.Selection) {
 		name := strings.TrimSpace(s.Find("a").Text())
 		c <- name

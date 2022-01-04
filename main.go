@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -147,21 +148,15 @@ func (m model) View() string {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	// search("Trnucha", loadNames())
 	search("", []string{})
 
-	done := make(chan struct{})
+	if err := tea.NewProgram(newModel()).Start(); err != nil {
+		fmt.Printf("Could not start program :(\n%v\n", err)
+		os.Exit(1)
+	}
 
-	p := tea.NewProgram(newModel())
-	go func() {
-		if err := p.Start(); err != nil {
-			fmt.Printf("Could not start program :(\n%v\n", err)
-			os.Exit(1)
-		}
-		close(done)
-	}()
-
-	<-done
 }
 
 func updateNames() tea.Msg {
