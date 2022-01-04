@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -66,7 +67,8 @@ var keys = keyMap{
 type model struct {
 	keys       keyMap
 	help       help.Model
-	inputStyle lipgloss.Style
+	spinner    spinner.Model
+	inputStyle func(string) string
 	status     map[string]string
 	names      []string
 	view       rune
@@ -75,10 +77,14 @@ type model struct {
 }
 
 func newModel() model {
+	s := spinner.NewModel()
+	s.Spinner = spinner.MiniDot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB300"))
 	return model{
 		keys:       keys,
 		help:       help.NewModel(),
-		inputStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")),
+		spinner:    s,
+		inputStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")).Render,
 		view:       's',
 		status:     getStatus(),
 		names:      loadNames(),
@@ -86,7 +92,7 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return spinner.Tick
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -116,6 +122,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.names = loadNames()
 		m.updating = false
 		return m, nil
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	}
 
 	return m, nil
@@ -128,16 +139,15 @@ func (m model) View() string {
 
 	var status string
 	if m.view == 's' {
-		status = ""
-		for k, v := range m.status {
-			status += fmt.Sprintf("%-10s: ", k) + m.inputStyle.Render(v) + "\n"
-		}
-		status += fmt.Sprintf("%-10s: ", "Count") + m.inputStyle.Render(fmt.Sprintf("%d", len(m.names))) + "\n"
+		status = fmt.Sprintf("%-10s: ", "Filename") + m.inputStyle(m.status["Filename"])
+		status += fmt.Sprintf("\n%-10s: ", "Date") + m.inputStyle(m.status["Updated"])
+		status += fmt.Sprintf("\n%-10s: ", "Count") + m.inputStyle(fmt.Sprintf("%d", len(m.names)))
 	}
 	if m.view == 'u' {
-		status = "Runing update..."
-		if !m.updating {
-			status += "\nUpdate done..."
+		if m.updating {
+			status = "Runing update..." + m.spinner.View()
+		} else {
+			status = m.inputStyle("Update done...")
 		}
 	}
 
