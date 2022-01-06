@@ -64,16 +64,19 @@ var keys = keyMap{
 	),
 }
 
+var (
+	highlightStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")).Render
+)
+
 type model struct {
-	keys       keyMap
-	help       help.Model
-	spinner    spinner.Model
-	inputStyle func(string) string
-	status     map[string]string
-	names      []string
-	view       rune
-	updating   bool
-	quitting   bool
+	keys     keyMap
+	help     help.Model
+	spinner  spinner.Model
+	status   map[string]string
+	names    []string
+	view     rune
+	updating bool
+	quitting bool
 }
 
 func newModel() model {
@@ -81,13 +84,12 @@ func newModel() model {
 	s.Spinner = spinner.MiniDot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB300"))
 	return model{
-		keys:       keys,
-		help:       help.NewModel(),
-		spinner:    s,
-		inputStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("#FF75B7")).Render,
-		view:       's',
-		status:     getStatus(),
-		names:      loadNames(),
+		keys:    keys,
+		help:    help.NewModel(),
+		spinner: s,
+		view:    's',
+		status:  getStatus(),
+		names:   loadNames(),
 	}
 }
 
@@ -142,15 +144,15 @@ func (m model) View() string {
 
 	var status string
 	if m.view == 's' {
-		status = fmt.Sprintf("%-10s: ", "Filename") + m.inputStyle(m.status["path"])
-		status += fmt.Sprintf("\n%-10s: ", "Updated") + m.inputStyle(m.status["date"])
-		status += fmt.Sprintf("\n%-10s: ", "Count") + m.inputStyle(fmt.Sprintf("%d", len(m.names)))
+		status = fmt.Sprintf("%-10s: ", "Filename") + highlightStyle(m.status["path"])
+		status += fmt.Sprintf("\n%-10s: ", "Updated") + highlightStyle(m.status["date"])
+		status += fmt.Sprintf("\n%-10s: ", "Count") + highlightStyle(fmt.Sprintf("%d", len(m.names)))
 	}
 	if m.view == 'u' {
 		if m.updating {
 			status = "Runing update..." + m.spinner.View()
 		} else {
-			status = m.inputStyle("Update done...")
+			status = highlightStyle("Update done...")
 		}
 	}
 
