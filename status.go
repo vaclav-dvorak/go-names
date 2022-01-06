@@ -10,15 +10,15 @@ import (
 
 func getStatus() map[string]string {
 	ret := map[string]string{
-		"Filename": file,
-		"Updated":  "--/--/----",
+		"path": file,
+		"date": "--/--/----",
 	}
 
 	fileInfo, err := os.Stat(file)
 	if err != nil {
 		return ret
 	}
-	ret["Updated"] = fileInfo.ModTime().Format("2006-01-02 15:04:05")
+	ret["date"] = fileInfo.ModTime().Format("2006-01-02 15:04:05")
 	return ret
 }
 

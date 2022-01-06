@@ -124,6 +124,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case spinner.TickMsg:
+		if m.view == 'u' && !m.updating {
+			return m, nil
+		}
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
@@ -139,8 +142,8 @@ func (m model) View() string {
 
 	var status string
 	if m.view == 's' {
-		status = fmt.Sprintf("%-10s: ", "Filename") + m.inputStyle(m.status["Filename"])
-		status += fmt.Sprintf("\n%-10s: ", "Date") + m.inputStyle(m.status["Updated"])
+		status = fmt.Sprintf("%-10s: ", "Filename") + m.inputStyle(m.status["path"])
+		status += fmt.Sprintf("\n%-10s: ", "Updated") + m.inputStyle(m.status["date"])
 		status += fmt.Sprintf("\n%-10s: ", "Count") + m.inputStyle(fmt.Sprintf("%d", len(m.names)))
 	}
 	if m.view == 'u' {
