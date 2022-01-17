@@ -8,18 +8,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func getStatus() map[string]string {
-	ret := map[string]string{
+func getStatus() (ret map[string]string) {
+	ret = map[string]string{
 		"path": file,
 		"date": "--/--/----",
 	}
 
 	fileInfo, err := os.Stat(file)
 	if err != nil {
-		return ret
+		return
 	}
 	ret["date"] = fileInfo.ModTime().Format("2006-01-02 15:04:05")
-	return ret
+	return
 }
 
 func loadNames() []string {
