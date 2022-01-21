@@ -53,14 +53,14 @@ func scrapeURL(url, conv string) *goquery.Document {
 	return doc
 }
 
-func scrapeRodina(c chan string) {
+func scrapeRodina(c chan<- string) {
 	doc := scrapeURL("https://www.rodina.cz/scripts/jmena/default.asp?muz=0", "windows-1250")
 	doc.Find(".jmena_vse h2").Each(func(i int, s *goquery.Selection) {
 		c <- s.Find("a").Text()
 	})
 }
 
-func scrapeCentrum(c chan string) {
+func scrapeCentrum(c chan<- string) {
 	doc := scrapeURL("http://svatky.centrum.cz/jmenny-seznam/?gender=1", "utf-8")
 	doc.Find("#list-names .name").Each(func(i int, s *goquery.Selection) {
 		name := s.Find("a").Text()
@@ -70,7 +70,7 @@ func scrapeCentrum(c chan string) {
 	})
 }
 
-func scrapeEmimino(c chan string) {
+func scrapeEmimino(c chan<- string) {
 	doc := scrapeURL("https://www.emimino.cz/seznam-jmen/neobvykla-jmena-pro-holku/", "utf-8")
 	doc.Find(".tabbed__body article li").Each(func(i int, s *goquery.Selection) {
 		name := strings.TrimSpace(s.Find("a").Text())
